@@ -694,6 +694,9 @@ const I18N = {
     "rule.loading_long.explain":   "Loading > 60s usually means slow disk I/O, swapping, or VRAM pressure forcing partial offload.",
     "rule.loading_long.suggest":   "Check disk speed and free GPU memory; consider a smaller quantization.",
 
+    "demo.banner_single":      "Demo mode — every endpoint is synthetic. No llama-server is involved.",
+    "demo.banner_router":      "Demo mode (router) — every endpoint is synthetic. No llama-server is involved.",
+
     "chat.title":              "Chat",
     "chat.expand":             "expand",
     "chat.collapse":           "collapse",
@@ -862,6 +865,9 @@ const I18N = {
     "rule.loading_long.title":     "모델 로딩이 오래 걸림",
     "rule.loading_long.explain":   "로딩이 60초 이상 지속되면 보통 디스크 I/O 지연, 스왑, VRAM 부족으로 인한 부분 오프로드가 원인입니다.",
     "rule.loading_long.suggest":   "디스크 속도와 GPU 여유 메모리를 확인하고, 더 작은 양자화를 고려하세요.",
+
+    "demo.banner_single":      "데모 모드 — 모든 엔드포인트가 합성 데이터입니다. llama-server는 실제로 동작하지 않습니다.",
+    "demo.banner_router":      "데모 모드 (라우터) — 모든 엔드포인트가 합성 데이터입니다. llama-server는 실제로 동작하지 않습니다.",
 
     "chat.title":              "채팅",
     "chat.expand":             "펼치기",
@@ -1033,6 +1039,9 @@ const I18N = {
     "rule.loading_long.explain":   "60 秒を超えるロードは、通常 ディスク I/O 遅延、スワップ、VRAM 圧迫による部分オフロードが原因です。",
     "rule.loading_long.suggest":   "ディスク速度と GPU 空きメモリを確認し、より小さい量子化を検討してください。",
 
+    "demo.banner_single":      "デモモード — すべてのエンドポイントは合成データです。実際の llama-server は動いていません。",
+    "demo.banner_router":      "デモモード(ルーター)— すべてのエンドポイントは合成データです。実際の llama-server は動いていません。",
+
     "chat.title":              "チャット",
     "chat.expand":             "展開",
     "chat.collapse":           "折りたたむ",
@@ -1202,6 +1211,9 @@ const I18N = {
     "rule.loading_long.title":     "模型加载耗时过长",
     "rule.loading_long.explain":   "加载超过 60 秒,通常是磁盘 I/O 慢、内存交换或 VRAM 压力导致部分卸载。",
     "rule.loading_long.suggest":   "检查磁盘速度与 GPU 可用显存;考虑使用更小的量化。",
+
+    "demo.banner_single":      "演示模式 — 所有接口均为合成数据,并未连接真实的 llama-server。",
+    "demo.banner_router":      "演示模式(路由)— 所有接口均为合成数据,并未连接真实的 llama-server。",
 
     "chat.title":              "聊天",
     "chat.expand":             "展开",
@@ -1373,6 +1385,9 @@ const I18N = {
     "rule.loading_long.explain":   "Cargas > 60s suelen significar I/O de disco lento, swap o presión de VRAM forzando offload parcial.",
     "rule.loading_long.suggest":   "Revisa la velocidad de disco y la memoria libre de la GPU; considera una cuantización menor.",
 
+    "demo.banner_single":      "Modo demo — todas las respuestas son sintéticas. No hay un llama-server real detrás.",
+    "demo.banner_router":      "Modo demo (router) — todas las respuestas son sintéticas. No hay un llama-server real detrás.",
+
     "chat.title":              "Chat",
     "chat.expand":             "expandir",
     "chat.collapse":           "contraer",
@@ -1425,6 +1440,7 @@ function parseParams() {
     log:    q.has("log") ? q.get("log") : null,   /* null = auto-detect */
     lang:   (q.get("lang") || "").trim(),
     prompt: q.get("prompt") || "",                /* prefill chat input */
+    demo:   (q.get("demo") || "").trim(),         /* "", "1", "router" */
   };
 }
 function clampInt(s, fallback, min, max) {
@@ -1593,6 +1609,254 @@ function endpoint(path, withModel) {
   return url;
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+ *  Demo mode — installs a fetch shim that returns synthetic responses
+ *  shaped exactly like real llama-server. Activated by ?demo=1 (single
+ *  mode) or ?demo=router (router mode). Lets the dashboard run on
+ *  static hosting (e.g. GitHub Pages) without any backend.
+ *
+ *  Real fetch is preserved for cross-origin requests we don't simulate
+ *  (e.g. external link previews — we don't make any, but defensively).
+ * ──────────────────────────────────────────────────────────────────── */
+function installDemoShim(mode) {
+  const realFetch = window.fetch.bind(window);
+  const t0 = Date.now();
+  const matchesServer = (url) => {
+    try {
+      const u = new URL(url, window.location.href);
+      return u.origin === new URL(state.serverBase, window.location.href).origin;
+    } catch (_e) { return false; }
+  };
+
+  /* Counters that grow over time so cumulative cards animate. */
+  const counters = () => {
+    const sec = (Date.now() - t0) / 1000;
+    return {
+      prompt_tokens_total:        Math.floor(120 + sec * 14),
+      tokens_predicted_total:     Math.floor(80 + sec * 27),
+      prompt_seconds_total:       (sec * 0.18).toFixed(3),
+      tokens_predicted_seconds_total: (sec * 0.62).toFixed(3),
+      n_decode_total:             Math.floor(40 + sec * 5),
+      n_tokens_max:               512 + Math.floor(sec / 30) * 64,
+      n_busy_slots_per_decode:    (1.4 + Math.sin(sec / 8) * 0.6).toFixed(2),
+    };
+  };
+
+  /* Gauges that oscillate. */
+  const gauges = () => {
+    const sec = (Date.now() - t0) / 1000;
+    const wave = (period, amp, base) => base + Math.sin(sec / period) * amp;
+    return {
+      prompt_tokens_seconds:     Math.max(0, wave(11, 60, 95)).toFixed(2),
+      predicted_tokens_seconds:  Math.max(0, wave(7, 22, 58)).toFixed(2),
+      requests_processing:       Math.max(0, Math.round(wave(13, 1.4, 1.5))),
+      requests_deferred:         Math.max(0, Math.round(wave(19, 1.1, 0.3))),
+    };
+  };
+
+  const renderPrometheus = () => {
+    const c = counters(), g = gauges();
+    let out = "";
+    const emit = (name, type, help, val) => {
+      out += `# HELP llamacpp:${name} ${help}\n# TYPE llamacpp:${name} ${type}\nllamacpp:${name} ${val}\n`;
+    };
+    emit("prompt_tokens_total", "counter", "Number of prompt tokens processed.", c.prompt_tokens_total);
+    emit("prompt_seconds_total", "counter", "Prompt process time", c.prompt_seconds_total);
+    emit("tokens_predicted_total", "counter", "Number of generation tokens processed.", c.tokens_predicted_total);
+    emit("tokens_predicted_seconds_total", "counter", "Predict process time", c.tokens_predicted_seconds_total);
+    emit("n_decode_total", "counter", "Total number of llama_decode() calls", c.n_decode_total);
+    emit("n_tokens_max", "counter", "Largest observed n_tokens.", c.n_tokens_max);
+    emit("n_busy_slots_per_decode", "counter", "Average busy slots per decode.", c.n_busy_slots_per_decode);
+    emit("prompt_tokens_seconds", "gauge", "Average prompt throughput in tokens/s.", g.prompt_tokens_seconds);
+    emit("predicted_tokens_seconds", "gauge", "Average generation throughput in tokens/s.", g.predicted_tokens_seconds);
+    emit("requests_processing", "gauge", "Number of requests processing.", g.requests_processing);
+    emit("requests_deferred", "gauge", "Number of requests deferred.", g.requests_deferred);
+    return out;
+  };
+
+  const sampleParams = {
+    n_predict: 400, seed: 42, temperature: 0.7, dynatemp_range: 0,
+    dynatemp_exponent: 1, top_k: 40, top_p: 0.95, min_p: 0.05,
+    typical_p: 1, xtc_probability: 0, xtc_threshold: 0.1,
+    repeat_last_n: 64, repeat_penalty: 1.05, presence_penalty: 0,
+    frequency_penalty: 0, dry_multiplier: 0, dry_base: 1.75,
+    mirostat: 0, mirostat_tau: 5, mirostat_eta: 0.1,
+    samplers: ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"],
+  };
+
+  const renderSlots = () => {
+    const sec = (Date.now() - t0) / 1000;
+    const out = [];
+    for (let i = 0; i < 4; i++) {
+      const isProc = ((Math.sin((sec + i * 1.7) / 4) + 1) / 2) > 0.55;
+      const slot = {
+        id: i, n_ctx: 1024, speculative: false, is_processing: isProc,
+      };
+      if (isProc) {
+        slot.id_task = 1000 + i;
+        slot.params = sampleParams;
+        slot.next_token = {
+          has_next_token: true, has_new_line: false,
+          n_remain: Math.floor(400 - ((sec * 8) % 380)),
+          n_decoded: Math.floor((sec * 8) % 380),
+        };
+      }
+      out.push(slot);
+    }
+    return out;
+  };
+
+  const propsResp = {
+    default_generation_settings: { ...sampleParams },
+    total_slots: 4,
+    model_path: mode === "router" ? "/models/qwen2.5-1.5b-instruct-q4_0.gguf"
+                                  : "/opt/models/demo-model.gguf",
+    chat_template: "{% for message in messages %}<|im_start|>{{ message.role }}\n{{ message.content }}<|im_end|>\n{% endfor %}<|im_start|>assistant\n",
+    chat_template_caps: { tools: false, vision: false },
+    modalities: { vision: false, audio: false },
+    media_marker: "<__media__>",
+    build_info: { build_number: "demo-9999", commit: "0000000" },
+    is_sleeping: false,
+  };
+
+  const v1ModelsResp = {
+    object: "list",
+    data: [{
+      id: mode === "router" ? "ggml-org/qwen2.5-1.5b-instruct-gguf:Q4_0" : "demo-model",
+      object: "model",
+      created: Math.floor(t0 / 1000),
+      owned_by: "llamacpp",
+      meta: {
+        n_vocab: 151936, n_ctx_train: 32768, n_embd: 1536,
+        n_params: 1543714304, size: 932512384,
+      },
+    }],
+  };
+
+  const modelsResp = mode === "router" ? [
+    {
+      id: "ggml-org/qwen2.5-1.5b-instruct-gguf:Q4_0",
+      in_cache: true,
+      path: "/cache/qwen2.5-1.5b-instruct-q4_0.gguf",
+      status: { value: "loaded",
+                args: ["-m", "/cache/qwen2.5-1.5b-instruct-q4_0.gguf",
+                       "-c", "4096", "--parallel", "4", "--metrics"],
+                failed: false, exit_code: null },
+    },
+    {
+      id: "ggml-org/llama-3.2-1b-instruct-gguf:Q4_K_M",
+      in_cache: true,
+      path: "/cache/llama-3.2-1b.gguf",
+      status: { value: "unloaded", args: [], failed: false, exit_code: null },
+    },
+    {
+      id: "ggml-org/qwen2.5-7b-instruct-gguf:Q4_K_M",
+      in_cache: false,
+      path: null,
+      status: { value: "failed",
+                args: ["-m", "/cache/qwen2.5-7b.gguf", "-ngl", "99"],
+                failed: true, exit_code: 137 },
+    },
+  ] : null;
+
+  const cannedReplies = [
+    `# Demo response\n\nThis dashboard is running in **demo mode** — every endpoint is synthetic. The real one talks to a [llama.cpp](https://github.com/ggml-org/llama.cpp) server.\n\n## What works\n\n- Streaming with throttled re-render\n- Markdown: lists, tables, code\n- Cancel mid-stream\n\n\`\`\`js\n// example\nfunction hello(name) {\n  return \`Hello, \${name}!\`;\n}\n\`\`\`\n\n| Metric | Source |\n|---|---|\n| tok/s | \`/metrics\` |\n| slots | \`/slots\` |\n| model | \`/v1/models\` |\n\n> Try clicking ⓘ on any card.`,
+    `Sure — quick rundown of the relevant flags:\n\n1. **\`--metrics\`** turns on \`/metrics\` (Prometheus).\n2. **\`--parallel N\`** sets concurrent slots; KV memory ≈ N × ctx_size × hidden_dim × 2.\n3. **\`-ngl L\`** offloads L layers to GPU. Set to 99 to offload everything when VRAM allows.\n4. **\`--ctx-size C\`** is total context shared across slots in single mode.\n\n*This is the demo response — no real model behind it.*`,
+    `Here's a small table of common sampling presets:\n\n| Preset | temp | top_p | repeat_penalty |\n|--------|------|-------|----------------|\n| chat   | 0.7  | 0.95  | 1.05           |\n| code   | 0.2  | 0.95  | 1.0            |\n| creative | 1.0 | 0.95 | 1.1            |\n\nUse \`temperature = 0\` for deterministic output (greedy). Setting \`mirostat\` to 1 or 2 ignores top_p / top_k entirely.`,
+  ];
+
+  const streamingChat = (body) => {
+    const replyIdx = (chat.messages.length / 2) | 0;
+    const text = cannedReplies[replyIdx % cannedReplies.length];
+    const tokens = text.split(/(\s+)/).filter(Boolean);
+    let signal = body && body.signal;
+    const stream = new ReadableStream({
+      async start(controller) {
+        const enc = new TextEncoder();
+        try {
+          for (let i = 0; i < tokens.length; i++) {
+            if (signal && signal.aborted) {
+              controller.close(); return;
+            }
+            const chunk = { choices: [{ delta: { content: tokens[i] } }] };
+            controller.enqueue(enc.encode("data: " + JSON.stringify(chunk) + "\n\n"));
+            await new Promise((r) => setTimeout(r, 30 + Math.random() * 50));
+          }
+          const usage = {
+            prompt_tokens: 24 + Math.floor(Math.random() * 30),
+            completion_tokens: tokens.length,
+            total_tokens: 0,
+          };
+          usage.total_tokens = usage.prompt_tokens + usage.completion_tokens;
+          controller.enqueue(enc.encode("data: " + JSON.stringify({ usage }) + "\n\n"));
+          controller.enqueue(enc.encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (e) {
+          controller.error(e);
+        }
+      },
+    });
+    return new Response(stream, {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  };
+
+  const json = (obj, status) =>
+    new Response(JSON.stringify(obj),
+      { status: status || 200, headers: { "Content-Type": "application/json" } });
+  const text = (str, status, type) =>
+    new Response(str,
+      { status: status || 200, headers: { "Content-Type": type || "text/plain; version=0.0.4" } });
+  const notFound = () => new Response("not found", { status: 404 });
+
+  window.fetch = function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (!matchesServer(url)) return realFetch(input, init);
+
+    let path;
+    try { path = new URL(url, window.location.href).pathname; }
+    catch (_e) { return realFetch(input, init); }
+    /* normalize: strip serverBase prefix path */
+    try {
+      const baseP = new URL(state.serverBase, window.location.href).pathname.replace(/\/+$/, "");
+      if (baseP && path.startsWith(baseP)) path = path.slice(baseP.length) || "/";
+    } catch (_e) {}
+
+    const method = (init && init.method) || (typeof input !== "string" ? input.method : "GET") || "GET";
+
+    if (path === "/health") return Promise.resolve(json({ status: "ok" }));
+    if (path === "/props")  return Promise.resolve(json(propsResp));
+    if (path === "/v1/models") return Promise.resolve(json(v1ModelsResp));
+    if (path === "/models") {
+      return Promise.resolve(modelsResp ? json(modelsResp) : notFound());
+    }
+    if (path === "/metrics") return Promise.resolve(text(renderPrometheus()));
+    if (path === "/slots")   return Promise.resolve(json(renderSlots()));
+    if (path === "/lora-adapters") return Promise.resolve(json([]));
+    if (path === "/v1/chat/completions" && method.toUpperCase() === "POST") {
+      return Promise.resolve(streamingChat(init || {}));
+    }
+    /* slot save/restore/erase, model load/unload — pretend success */
+    if (path.startsWith("/slots/") || path.startsWith("/models/load") || path.startsWith("/models/unload")) {
+      return Promise.resolve(json({ success: true, demo: true }));
+    }
+    /* server.log HEAD — return 404 so log panel hides cleanly */
+    return Promise.resolve(notFound());
+  };
+
+  /* Surface the demo state to the user. Banner uses i18n key. */
+  const showDemoBanner = () => {
+    const wrap = $("#banners");
+    if (!wrap) return;
+    const key = mode === "router" ? "demo.banner_router" : "demo.banner_single";
+    const node = el("div", { class: "banner", data: { id: "demo-mode" } }, t(key));
+    wrap.appendChild(node);
+  };
+  /* applyI18n hasn't run yet — defer to next microtask */
+  Promise.resolve().then(showDemoBanner);
+}
+
 async function fetchJSON(path, opts) {
   return fetchEndpoint(path, opts, "json");
 }
@@ -1714,6 +1978,12 @@ document.addEventListener("visibilitychange", () => {
  *  function (defined in later phases). Phase 2 only verifies wiring.
  * ──────────────────────────────────────────────────────────────────── */
 async function boot() {
+  /* Install the demo fetch shim before initHeader / any fetch fires.
+   * ?demo=1 → single-mode synthetic; ?demo=router → router-mode. */
+  if (state.params.demo) {
+    installDemoShim(state.params.demo === "router" ? "router" : "single");
+  }
+
   initHeader();
   ensureRootScaffold();
   setStatus("connecting", "header.status.connecting");
@@ -3481,7 +3751,10 @@ function renderChatPanel() {
 
   const body = el("div", { class: "chat-body", id: "chat-body", hidden: !chat.open },
                   [main, side]);
-  const card = el("div", { class: "card chat-card" }, [head, body]);
+  /* `.full` makes the card span the main grid (grid-column: 1 / -1).
+   * Without it the card becomes one column and the inner 1fr 280px
+   * chat body collapses (message column ~120px, code blocks clipped). */
+  const card = el("div", { class: "card full chat-card" }, [head, body]);
   sec.innerHTML = "";
   sec.appendChild(card);
 

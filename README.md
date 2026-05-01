@@ -8,6 +8,18 @@ A zero-dependency, single-HTML-file monitoring dashboard for
 > Inspired by [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT).
 > No npm, no CDN, no localStorage. Just one HTML file.
 
+## Live demo
+
+Open `monitor.html?demo=1` to run the dashboard against a built-in mock
+server. Every endpoint (`/metrics`, `/slots`, `/props`, `/v1/models`,
+streaming `/v1/chat/completions`) is satisfied by synthetic data that
+varies over time, so the cards animate, the slots toggle active/idle,
+and chat streams realistic markdown back. Use `?demo=router` to see the
+multi-model router view.
+
+This makes the project deployable as a static site (e.g. GitHub Pages —
+see [Deploying the demo](#deploying-the-demo) below).
+
 ## Screenshots
 
 ![dashboard (English)](docs/screenshots/main-en.png)
@@ -80,6 +92,7 @@ selector appears in the header.
 | `log` | auto | log file path; auto-detect if not specified, panel hidden if not reachable |
 | `lang` | auto | `en` / `ko` / `ja` / `zh-CN` / `es` (defaults from browser) |
 | `prompt` | (none) | prefills the chat input on load (no auto-send) |
+| `demo` | (none) | `1` for single-mode mock server, `router` for router-mode mock |
 
 Settings live in the URL only — no localStorage. Share a link, get the
 same view.
@@ -146,6 +159,23 @@ path with `?log=path/to/file`. Disable explicitly with `?log=`.
 
 Full ruleset rendered in the dashboard's "Active suggestions" panel
 when triggered.
+
+## Deploying the demo
+
+The demo mode (`?demo=1`) needs no server, so any static host works.
+The repo ships a GitHub Actions workflow at
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) that
+publishes `monitor.html` to GitHub Pages on every push to `main`:
+
+1. Repo Settings → **Pages** → **Build and deployment** → Source =
+   "GitHub Actions".
+2. Push to `main`; the workflow builds and deploys.
+3. Visit `https://<user>.github.io/<repo>/?demo=1` (the demo banner
+   confirms you're on synthetic data).
+
+GitHub Pages is free, HTTPS-by-default, and has no idle-sleep — fine
+for leaving up indefinitely. Because everything is static, there is no
+backend to keep alive and nothing the public can break.
 
 ## License
 

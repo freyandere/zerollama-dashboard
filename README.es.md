@@ -8,6 +8,18 @@ servidores [llama.cpp](https://github.com/ggml-org/llama.cpp).
 > Inspirado en [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT).
 > Sin npm, sin CDN, sin localStorage. Solo un archivo HTML.
 
+## Demo en vivo
+
+Abre `monitor.html?demo=1` para ejecutar el panel contra un servidor mock
+integrado. Cada endpoint (`/metrics`, `/slots`, `/props`, `/v1/models`,
+streaming `/v1/chat/completions`) responde con datos sintéticos que varían
+en el tiempo, así que las tarjetas se animan, los slots alternan entre
+activo / inactivo y el chat devuelve markdown realista en streaming.
+Usa `?demo=router` para ver la vista multi-modelo en modo router.
+
+Esto permite desplegar el proyecto como sitio estático sin backend
+(GitHub Pages — ver [Desplegar la demo](#desplegar-la-demo) abajo).
+
 ## Capturas
 
 ![panel (inglés)](docs/screenshots/main-en.png)
@@ -80,6 +92,7 @@ Aparece un selector de modelo en la cabecera.
 | `log` | auto | ruta del log; autodetectado si no se especifica, panel oculto si no es accesible |
 | `lang` | auto | `en` / `ko` / `ja` / `zh-CN` / `es` (por defecto desde el navegador) |
 | `prompt` | (ninguno) | rellena el campo del chat al cargar (no envía automáticamente) |
+| `demo` | (ninguno) | `1` activa mock en modo single, `router` en modo router |
 
 Los ajustes viven solo en la URL — sin localStorage. Comparte un enlace,
 obtén la misma vista.
@@ -150,6 +163,23 @@ ruta con `?log=path/to/file`. Desactívalo explícitamente con `?log=`.
 
 El conjunto completo de reglas se renderiza en el panel "Active
 suggestions" del dashboard cuando se activan.
+
+## Desplegar la demo
+
+El modo demo (`?demo=1`) no necesita backend, así que cualquier hosting
+estático sirve. El repositorio incluye
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml), que
+publica `monitor.html` en GitHub Pages en cada push a `main`:
+
+1. Settings del repo → **Pages** → **Build and deployment** → Source
+   "GitHub Actions".
+2. Push a `main`; el workflow construye y despliega.
+3. Visita `https://<user>.github.io/<repo>/?demo=1` (el banner
+   confirma que es data sintética).
+
+GitHub Pages es gratis, HTTPS por defecto, sin idle-sleep — déjalo
+encendido. Como todo es estático, no hay backend que mantener vivo ni
+nada que el público pueda romper.
 
 ## Licencia
 

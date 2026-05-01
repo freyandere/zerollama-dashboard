@@ -8,6 +8,17 @@
 > [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT)에서 영감을 받음.
 > npm 없음, CDN 없음, localStorage 없음. HTML 파일 단 하나.
 
+## 라이브 데모
+
+`monitor.html?demo=1`을 열면 내장된 mock 서버로 대시보드가 동작합니다.
+모든 엔드포인트(`/metrics`, `/slots`, `/props`, `/v1/models`, 스트리밍
+`/v1/chat/completions`)가 시간에 따라 변하는 합성 데이터로 응답하므로 카드가
+움직이고, 슬롯이 active/idle을 오가고, 채팅이 진짜처럼 마크다운을 스트리밍
+해줍니다. `?demo=router`로 멀티 모델 라우터 화면도 볼 수 있어요.
+
+덕분에 백엔드 없이도 정적 사이트로 배포 가능합니다 (GitHub Pages는 아래
+[데모 배포](#데모-배포) 참조).
+
 ## 스크린샷
 
 ![대시보드 (영어)](docs/screenshots/main-en.png)
@@ -77,6 +88,7 @@ llama-server --models-dir ./models --metrics --port 8080
 | `log` | auto | 로그 파일 경로; 미지정 시 자동 감지, 접근 불가 시 패널 숨김 |
 | `lang` | auto | `en` / `ko` / `ja` / `zh-CN` / `es` (브라우저 기본값) |
 | `prompt` | (없음) | 채팅 입력칸을 미리 채움 (자동 전송 안 함) |
+| `demo` | (없음) | `1`이면 단일 모드 mock 서버, `router`이면 라우터 모드 mock |
 
 설정은 모두 URL에만 있음 — localStorage 없음. 링크 공유 = 동일 화면.
 
@@ -137,6 +149,21 @@ llama-server --models-dir ./models --metrics --port 8080
 | 라우터 모델 `failed` | — | `exit_code` 확인; args / VRAM 점검 |
 
 전체 룰셋은 트리거될 때 대시보드의 "Active suggestions" 패널에 렌더링됩니다.
+
+## 데모 배포
+
+데모 모드(`?demo=1`)는 서버가 필요 없으니 어떤 정적 호스팅이든 OK.
+레포에는 [`.github/workflows/pages.yml`](.github/workflows/pages.yml)이
+들어 있어서 `main`에 푸시할 때마다 자동으로 GitHub Pages에 배포됩니다:
+
+1. 레포 Settings → **Pages** → **Build and deployment** → Source를
+   "GitHub Actions"로 설정
+2. `main`에 push하면 워크플로가 빌드·배포
+3. `https://<user>.github.io/<repo>/?demo=1` 방문 (데모 배너로 합성
+   데이터임을 확인)
+
+GitHub Pages는 무료, HTTPS 자동, idle sleep 없음 — 그냥 켜놓아도 OK.
+모두 정적 파일이라 서버를 살려둘 필요 없고, 외부에서 망가뜨릴 거리도 없음.
 
 ## 라이선스
 

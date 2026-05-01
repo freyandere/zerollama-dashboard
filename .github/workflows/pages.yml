@@ -1,0 +1,48 @@
+name: Deploy demo to GitHub Pages
+
+# Publishes monitor.html and docs/ to GitHub Pages so anyone can open
+# `https://<user>.github.io/<repo>/monitor.html?demo=1` and see the
+# dashboard live with synthetic data — no llama-server required.
+#
+# To activate: in repo Settings → Pages → "Build and deployment" set
+# Source to "GitHub Actions". Workflow runs on every push to the
+# default branch.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage site
+        run: |
+          mkdir -p _site
+          cp monitor.html _site/index.html
+          cp monitor.html _site/monitor.html
+          [ -d docs ] && cp -r docs _site/docs || true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

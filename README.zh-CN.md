@@ -8,6 +8,16 @@
 > 灵感来自 [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT)。
 > 无 npm,无 CDN,无 localStorage。仅一个 HTML 文件。
 
+## 在线演示
+
+打开 `monitor.html?demo=1` 即可在内置 mock 服务器上运行仪表盘。所有接口
+(`/metrics`、`/slots`、`/props`、`/v1/models`、流式 `/v1/chat/completions`)
+均由随时间变化的合成数据应答,卡片会动态更新,槽位在 active/idle 之间切换,
+聊天会真实地以 Markdown 流式返回。使用 `?demo=router` 查看多模型路由视图。
+
+因此可以作为静态站点部署,无需任何后端(GitHub Pages 见下方
+[部署演示](#部署演示))。
+
 ## 截图
 
 ![仪表盘 (英文)](docs/screenshots/main-en.png)
@@ -75,6 +85,7 @@ llama-server --models-dir ./models --metrics --port 8080
 | `log` | auto | 日志文件路径; 未指定则自动检测,不可达时隐藏面板 |
 | `lang` | auto | `en` / `ko` / `ja` / `zh-CN` / `es` (来自浏览器) |
 | `prompt` | (无) | 预填聊天输入框(不会自动发送) |
+| `demo` | (无) | `1` 启用单模式 mock,`router` 启用路由模式 mock |
 
 设置全部存于 URL — 不使用 localStorage。分享链接 = 同一视图。
 
@@ -134,6 +145,20 @@ llama-server 通信,因此可以发送提示并实时观察指标的反应。
 | 路由模型 `failed` | — | 检查 `exit_code`; 检查 args / VRAM |
 
 完整规则集会在触发时渲染到仪表盘的「Active suggestions」面板。
+
+## 部署演示
+
+演示模式(`?demo=1`)无需后端,任何静态托管均可。仓库自带
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml),每次 push 到
+`main` 时自动发布到 GitHub Pages:
+
+1. 仓库 Settings → **Pages** → **Build and deployment** → Source 选择
+   "GitHub Actions"
+2. push 到 `main`,工作流构建并部署
+3. 访问 `https://<user>.github.io/<repo>/?demo=1`(横幅会确认这是合成数据)
+
+GitHub Pages 免费、HTTPS 自动、无 idle sleep — 可以一直挂着。全部静态,
+没有后端需要维护,外部也无从破坏。
 
 ## 许可证
 

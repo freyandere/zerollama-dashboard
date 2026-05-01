@@ -8,6 +8,18 @@
 > [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT) にインスパイアされています。
 > npm なし、CDN なし、localStorage なし。HTML ファイル一つだけ。
 
+## ライブデモ
+
+`monitor.html?demo=1` を開くと内蔵モックサーバー上でダッシュボードが
+動きます。すべてのエンドポイント(`/metrics`、`/slots`、`/props`、
+`/v1/models`、ストリーミング `/v1/chat/completions`)が時間とともに
+変化する合成データで応答するため、カードがアニメーションし、スロットが
+active/idle を行き来し、チャットが本物のように Markdown をストリームします。
+`?demo=router` でマルチモデルのルーター画面も確認できます。
+
+これにより、バックエンドなしで静的サイトとしてデプロイできます
+(GitHub Pages については下の[デモのデプロイ](#デモのデプロイ)を参照)。
+
 ## スクリーンショット
 
 ![ダッシュボード (英語)](docs/screenshots/main-en.png)
@@ -76,6 +88,7 @@ llama-server --models-dir ./models --metrics --port 8080
 | `log` | auto | ログファイルパス; 未指定なら自動検出、到達不能ならパネル非表示 |
 | `lang` | auto | `en` / `ko` / `ja` / `zh-CN` / `es` (ブラウザのデフォルト言語) |
 | `prompt` | (なし) | チャット入力欄を初期化(自動送信はしません) |
+| `demo` | (なし) | `1` でシングルモードのモックサーバ、`router` でルーターモードのモック |
 
 設定はすべて URL に保持 — localStorage は使いません。リンクを共有 = 同じビュー。
 
@@ -139,6 +152,21 @@ llama-server --models-dir ./models --metrics --port 8080
 
 全ルールセットは条件成立時にダッシュボードの「Active suggestions」パネルに
 描画されます。
+
+## デモのデプロイ
+
+デモモード(`?demo=1`)はサーバー不要なので、どんな静的ホスティングでも
+動きます。リポジトリには [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
+が含まれており、`main` への push のたびに GitHub Pages へ自動デプロイされます:
+
+1. リポジトリ Settings → **Pages** → **Build and deployment** → Source
+   を「GitHub Actions」に設定
+2. `main` に push するとワークフローがビルド & デプロイ
+3. `https://<user>.github.io/<repo>/?demo=1` にアクセス
+   (デモバナーで合成データであることが確認できます)
+
+GitHub Pages は無料、HTTPS が標準、idle sleep もなし — そのまま放置で OK。
+すべて静的なので生かしておくサーバーもなく、外部から壊される要素もありません。
 
 ## ライセンス
 
