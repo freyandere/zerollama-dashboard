@@ -1476,6 +1476,11 @@ function deriveServerBase(raw) {
   if (!raw) return window.location.origin;
   try {
     const url = new URL(raw, window.location.href);
+    /* Whitelist http(s) only — javascript:, data:, file: etc. would either
+     * fail in fetch or behave surprisingly. Better to surface early. */
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return window.location.origin;
+    }
     return url.origin + (url.pathname.replace(/\/+$/, ""));
   } catch (_e) {
     /* report at boot time, fall back to current origin */
@@ -3124,6 +3129,7 @@ setInterval(tickLastUpdate, 1000);
  *  - Streaming uses fetch + ReadableStream; AbortController lets the
  *    user cancel a generation mid-flight.
  * ──────────────────────────────────────────────────────────────────── */
+const CHAT_HISTORY_MAX_TURNS = 40;   /* cap to bound payload + memory */
 const chat = {
   open: false,
   messages: [],          /* {role, content, stats?} */
@@ -3131,6 +3137,16 @@ const chat = {
   inflight: null,        /* AbortController */
   params: { temperature: 0.7, top_p: 0.95, max_tokens: 512, fanout: 1 },
 };
+
+/* Keep the most recent turns. A turn is one user + one assistant message,
+ * so we cap at 2 * CHAT_HISTORY_MAX_TURNS entries. Drop from the front so
+ * the assistant still sees the most recent context. */
+function trimChatHistory() {
+  const cap = CHAT_HISTORY_MAX_TURNS * 2;
+  if (chat.messages.length > cap) {
+    chat.messages.splice(0, chat.messages.length - cap);
+  }
+}
 
 /* ── Markdown → DOM renderer ────────────────────────────────────────── */
 /* Block grammar handled: ATX headings, fenced code, GFM tables, lists
@@ -3562,6 +3578,7 @@ async function sendChat() {
 
   /* push user message */
   chat.messages.push({ role: "user", content: text });
+  trimChatHistory();
   appendChatMessage("user", text);
 
   /* fan-out N parallel requests for stress test mode */
@@ -3599,7 +3616,10 @@ async function sendChat() {
     const results = await Promise.allSettled(tasks);
     /* collapse the user-facing assistant history into the first successful response */
     const first = results.find((r) => r.status === "fulfilled" && r.value);
-    if (first) chat.messages.push({ role: "assistant", content: first.value.content });
+    if (first) {
+      chat.messages.push({ role: "assistant", content: first.value.content });
+      trimChatHistory();
+    }
     setChatStats("");
   } catch (e) {
     setChatStats(t("chat.error") + ": " + (e && e.message ? e.message : String(e)));
@@ -3645,7 +3665,9 @@ async function streamOne(url, payload, signal, target, t0, idx, total) {
   let usage = null;
   let nTokens = 0;
 
-  const reflow = () => {
+  let pendingReflow = false;
+  const doReflow = () => {
+    pendingReflow = false;
     /* full re-render — content is small, and the renderer builds DOM
      * directly so this is safe and cheaper than diffing partial deltas. */
     while (target.body.firstChild) target.body.removeChild(target.body.firstChild);
@@ -3655,6 +3677,13 @@ async function streamOne(url, payload, signal, target, t0, idx, total) {
     if (msgs && (msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight) < 80) {
       msgs.scrollTop = msgs.scrollHeight;
     }
+  };
+  /* throttle to ~60ms — re-rendering whole markdown every token is O(n²);
+   * 60ms feels live without burning the main thread on long responses. */
+  const reflow = () => {
+    if (pendingReflow) return;
+    pendingReflow = true;
+    setTimeout(doReflow, 60);
   };
 
   try {
@@ -3693,6 +3722,9 @@ async function streamOne(url, payload, signal, target, t0, idx, total) {
     target.stats.textContent = t("chat.error") + ": " + e.message;
     throw e;
   }
+
+  /* flush any throttled reflow so the message body is final when we return */
+  doReflow();
 
   /* Final stats from server usage if provided */
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
