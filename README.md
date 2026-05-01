@@ -8,6 +8,13 @@ A zero-dependency, single-HTML-file monitoring dashboard for
 > Inspired by [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT).
 > No npm, no CDN, no localStorage. Just one HTML file.
 
+## Screenshots
+
+![dashboard (English)](docs/screenshots/main-en.png)
+![dashboard (Korean)](docs/screenshots/main-ko.png)
+![slot details](docs/screenshots/slots-open.png)
+![mobile view](docs/screenshots/mobile.png)
+
 ## What it shows
 
 - Live `/metrics` (Prometheus): generation tok/s, prompt tok/s, KV cache

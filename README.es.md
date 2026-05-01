@@ -8,6 +8,13 @@ servidores [llama.cpp](https://github.com/ggml-org/llama.cpp).
 > Inspirado en [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT).
 > Sin npm, sin CDN, sin localStorage. Solo un archivo HTML.
 
+## Capturas
+
+![panel (inglés)](docs/screenshots/main-en.png)
+![panel (coreano)](docs/screenshots/main-ko.png)
+![detalle de slots](docs/screenshots/slots-open.png)
+![vista móvil](docs/screenshots/mobile.png)
+
 ## Qué muestra
 
 - `/metrics` en vivo (Prometheus): tok/s de generación / prompt, uso de

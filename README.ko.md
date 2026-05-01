@@ -8,6 +8,13 @@
 > [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT)에서 영감을 받음.
 > npm 없음, CDN 없음, localStorage 없음. HTML 파일 단 하나.
 
+## 스크린샷
+
+![대시보드 (영어)](docs/screenshots/main-en.png)
+![대시보드 (한국어)](docs/screenshots/main-ko.png)
+![슬롯 상세](docs/screenshots/slots-open.png)
+![모바일 화면](docs/screenshots/mobile.png)
+
 ## 표시되는 정보
 
 - 실시간 `/metrics` (Prometheus): 생성/프롬프트 tok/s, KV 캐시 사용률,

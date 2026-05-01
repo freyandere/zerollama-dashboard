@@ -8,6 +8,13 @@
 > [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT) にインスパイアされています。
 > npm なし、CDN なし、localStorage なし。HTML ファイル一つだけ。
 
+## スクリーンショット
+
+![ダッシュボード (英語)](docs/screenshots/main-en.png)
+![ダッシュボード (韓国語)](docs/screenshots/main-ko.png)
+![スロット詳細](docs/screenshots/slots-open.png)
+![モバイル表示](docs/screenshots/mobile.png)
+
 ## 表示する情報
 
 - リアルタイム `/metrics` (Prometheus): 生成/プロンプト tok/s、KV キャッシュ

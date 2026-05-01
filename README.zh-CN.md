@@ -8,6 +8,13 @@
 > 灵感来自 [abhiFSD/llama.cpp-Monitor-Dashboard](https://github.com/abhiFSD/llama.cpp-Monitor-Dashboard) (MIT)。
 > 无 npm,无 CDN,无 localStorage。仅一个 HTML 文件。
 
+## 截图
+
+![仪表盘 (英文)](docs/screenshots/main-en.png)
+![仪表盘 (韩文)](docs/screenshots/main-ko.png)
+![槽位详情](docs/screenshots/slots-open.png)
+![移动端视图](docs/screenshots/mobile.png)
+
 ## 显示什么
 
 - 实时 `/metrics` (Prometheus): 生成 / 提示 tok/s,KV 缓存使用率,
