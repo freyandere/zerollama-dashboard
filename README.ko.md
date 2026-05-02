@@ -55,13 +55,25 @@ http://localhost:8000/monitor.html?server=http://10.0.0.5:8080
 | `server` | llama-server URL (기본값: 같은 origin) |
 | `model` | 라우터 모드에서 기본으로 선택할 모델 |
 | `lang` | UI 언어 (`en` / `ko` / `ja` / `zh-CN` / `es`) |
-| `prompt` | 채팅 입력란 초기 텍스트 |
 | `demo` | `1` 또는 `router` — 내장 mock 서버 사용 |
-| `poll` | 폴링 간격, ms (기본값 `1000`) |
-| `log` | 로그 파일 경로 (생략 시 자동 감지) |
 
 설정값은 모두 URL에 담깁니다. 링크 하나로 동일한 화면을 그대로 공유할
 수 있습니다.
+
+## 옵션 기능: 서버 로그
+
+대시보드는 `monitor.html`과 같은 origin에서 `server.log` 파일을 찾으면
+자동으로 tail해 보여줍니다. 이 기능을 사용하려면 llama-server를 띄울 때
+stdout/stderr를 정적 서빙 디렉터리 안의 파일로 리다이렉트하세요.
+
+```bash
+llama-server -m model.gguf --metrics --port 8080 --path ./public \
+  > ./public/server.log 2>&1
+```
+
+로그 파일이 없으면 패널은 조용히 숨김 처리되므로 별도 설정 없이도
+대시보드는 정상 동작합니다. 경로를 바꾸려면 `?log=경로`, 명시적으로
+비활성화하려면 `?log=`(빈 값)을 사용하세요.
 
 ## 개인정보와 안전성
 

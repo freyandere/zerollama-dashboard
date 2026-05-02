@@ -55,13 +55,25 @@ http://localhost:8000/monitor.html?server=http://10.0.0.5:8080
 | `server` | llama-server URL (default: same origin) |
 | `model` | router mode: which model to pre-select |
 | `lang` | UI language (`en` / `ko` / `ja` / `zh-CN` / `es`) |
-| `prompt` | prefill the chat input on load |
 | `demo` | `1` or `router` for the built-in mock server |
-| `poll` | polling interval, ms (default `1000`) |
-| `log` | log file path (auto-detected when omitted) |
 
 Every setting lives in the URL, so a link captures the exact view —
 share it and the recipient sees the same thing.
+
+## Optional: server log
+
+The dashboard tails `server.log` automatically when it can reach one
+on the same origin as `monitor.html`. To enable it, redirect
+llama-server's stdout/stderr into the directory you serve from:
+
+```bash
+llama-server -m model.gguf --metrics --port 8080 --path ./public \
+  > ./public/server.log 2>&1
+```
+
+If no log file is reachable the panel hides itself silently — no
+configuration needed. Pass `?log=path/to/file` to override the path,
+or `?log=` to disable the panel explicitly.
 
 ## Privacy and safety
 

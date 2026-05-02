@@ -56,13 +56,26 @@ http://localhost:8000/monitor.html?server=http://10.0.0.5:8080
 | `server` | llama-server の URL(既定: 同一 origin) |
 | `model` | ルーターモードで既定選択するモデル |
 | `lang` | UI 言語(`en` / `ko` / `ja` / `zh-CN` / `es`) |
-| `prompt` | チャット入力欄に初期値を設定 |
 | `demo` | `1` または `router` — 内蔵モックサーバを使用 |
-| `poll` | ポーリング間隔、ms(既定 `1000`) |
-| `log` | ログファイルパス(省略時は自動検出) |
 
 設定はすべて URL に含まれるため、リンクを共有すれば同じ画面をそのまま
 再現できます。
+
+## オプション機能: サーバログ
+
+ダッシュボードは `monitor.html` と同一 origin に `server.log` を見つけ
+られれば、自動的に tail して表示します。有効にするには llama-server の
+stdout/stderr を、配信ディレクトリ内のファイルへリダイレクトしてください。
+
+```bash
+llama-server -m model.gguf --metrics --port 8080 --path ./public \
+  > ./public/server.log 2>&1
+```
+
+ログファイルが存在しない場合、パネルは自動的に非表示となるため、
+リダイレクトしなくてもダッシュボード自体は問題なく動作します。パスを
+変更するには `?log=path/to/file`、明示的に無効化するには `?log=`(空値)
+を指定してください。
 
 ## プライバシーと安全性
 

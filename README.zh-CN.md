@@ -51,12 +51,23 @@ http://localhost:8000/monitor.html?server=http://10.0.0.5:8080
 | `server` | llama-server 的 URL(默认:同源) |
 | `model` | 路由模式下默认选中的模型 |
 | `lang` | UI 语言(`en` / `ko` / `ja` / `zh-CN` / `es`) |
-| `prompt` | 聊天输入框的初始内容 |
 | `demo` | `1` 或 `router`,使用内置 mock 服务器 |
-| `poll` | 轮询间隔,ms(默认 `1000`) |
-| `log` | 日志文件路径(省略时自动检测) |
 
 所有设置均保存在 URL 中,因此分享一条链接即可还原相同的视图。
+
+## 可选功能:服务器日志
+
+仪表盘会自动在 `monitor.html` 同源位置查找 `server.log`,找到即开始
+tail 显示。要启用此功能,请在启动 llama-server 时将 stdout/stderr
+重定向到静态目录中的文件:
+
+```bash
+llama-server -m model.gguf --metrics --port 8080 --path ./public \
+  > ./public/server.log 2>&1
+```
+
+如果日志文件不可达,该面板会自动隐藏,因此不做配置也不会影响仪表盘
+正常使用。可通过 `?log=路径` 自定义路径,或通过 `?log=`(空值)显式禁用。
 
 ## 隐私与安全
 

@@ -60,13 +60,27 @@ http://localhost:8000/monitor.html?server=http://10.0.0.5:8080
 | `server` | URL de llama-server (por defecto: mismo origen) |
 | `model` | modelo preseleccionado en modo router |
 | `lang` | idioma de la interfaz (`en` / `ko` / `ja` / `zh-CN` / `es`) |
-| `prompt` | rellena el campo del chat al cargar |
 | `demo` | `1` o `router` para usar el servidor mock integrado |
-| `poll` | intervalo de polling, ms (por defecto `1000`) |
-| `log` | ruta del archivo de log (autodetectada si se omite) |
 
 Los ajustes se guardan únicamente en la URL: comparte un enlace y
 quien lo abra verá exactamente la misma vista.
+
+## Opcional: log del servidor
+
+El panel hace tail de `server.log` automáticamente cuando puede
+encontrar uno en el mismo origen que `monitor.html`. Para activarlo,
+redirige stdout/stderr de llama-server al directorio que sirves de
+forma estática:
+
+```bash
+llama-server -m model.gguf --metrics --port 8080 --path ./public \
+  > ./public/server.log 2>&1
+```
+
+Si no hay archivo de log accesible, el panel se oculta solo, así que
+no hace falta configurar nada para que el resto funcione. Usa
+`?log=ruta/al/archivo` para cambiar la ruta, o `?log=` (valor vacío)
+para desactivarlo explícitamente.
 
 ## Privacidad y seguridad
 
