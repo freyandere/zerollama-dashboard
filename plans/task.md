@@ -1,0 +1,25 @@
+# Tasks
+
+- [x] Clean up translations dictionary `I18N` to keep `en` and `ru`, and remove `ko`, `ja`, `zh-CN`, `es`
+- [x] Add complete Russian translations for all UI keys and parameter descriptions
+- [x] Update `pickLang` function to only handle `en` and `ru`
+- [x] Wire hover descriptions (`title` attribute) to parameter key element in `updateSlotNode`
+- [x] Verify code validity using Node execution check
+- [x] Run `verify_ids.py` to ensure DOM ID structure is preserved
+- [x] Validate translations and hover behavior manually in browser via demo mode
+- [x] Update `walkthrough.md` to document changes
+- [x] Write `start-dashboard-enhanced.bat` for launching the enhanced dashboard version
+- [x] Update `walkthrough.md` to include reference to the new batch file
+- [x] Implement dropdown inline expanders for all dashboard metric cards
+- [x] Add EN and RU descriptions for all metric cards
+- [x] Verify dropdown functionality and capture screenshot
+- [x] Convert metric description dropdown to pure CSS hover-triggered expander
+- [x] Update `walkthrough.md` with hover behavior and new screenshot reference
+- [x] Fix missing closing brace in `footer.app` styling within `monitor-enhanced.html`
+- [x] Update `renderLoraCard` to hide `#lora-section` dynamically if `state.loraAdapters` is empty
+- [x] Validate chat layout and LoRA section behavior in browser
+- [x] Constrain `.chat-body` height (height: 600px, max-height: 80vh, overflow: hidden)
+- [x] Add `height: 100%` to `.chat-main`
+- [x] Update mobile media query to adapt `.chat-body` height (70vh, max-height: 90vh)
+- [x] Validate fixed and scrollable chat UI with screenshots and Playwright tests
+- [x] Update walkthrough document
