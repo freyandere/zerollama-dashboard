@@ -1556,6 +1556,8 @@ function installDemoShim(mode) {
       const isProc = ((Math.sin((sec + i * 1.7) / 4) + 1) / 2) > 0.55;
       const slot = {
         id: i, n_ctx: 1024, speculative: false, is_processing: isProc,
+        n_prompt_tokens: isProc ? 50000 + i * 1000 : 0,
+        n_prompt_tokens_processed: isProc ? 30000 + i * 500 : 0,
       };
       if (isProc) {
         slot.id_task = 1000 + i;
