@@ -8,7 +8,7 @@ react on the same page.
 
 [**▶ Try the live demo**](https://jungrok5.github.io/zerollama-dashboard/?demo=1) — runs against a built-in mock server, no backend required.
 
-> Languages: **English** · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md)
+> Languages: **English** · [Русский](README.ru.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md)
 
 ![dashboard](docs/screenshots/main-en.png)
 ![chat panel](docs/screenshots/chat-panel.png)
